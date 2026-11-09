@@ -27,3 +27,7 @@ R | RStudio | R Markdown
 
 Este proyecto forma parte de mi formación en análisis de datos y refleja la aplicación de métodos estadísticos, programación en R y comunicación de resultados cuantitativos.
 
+## Visualización del análisis
+
+[Ver informe estadístico completo](https://kerlygaravito-byte.github.io/analisis-estadistico-glucosa-r/evaluacion_estadistica.html)
+
