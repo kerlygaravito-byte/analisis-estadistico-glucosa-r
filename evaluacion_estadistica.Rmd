@@ -1,0 +1,524 @@
+---
+title: "PRUEBA EVALUACIÓN  CURSO 26-27"
+author: "Kerly Naomi Garavito Canales"
+date: "2026-10-17"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ejercicio 1
+
+## a) Medidas de centralización y dispersión para cada uno de los dos grupos de control para el nivel de glucosa basal:
+
+Se analiza el nivel de glucosa basal por separado para jóvenes y adultos.
+```{r cargar-datos, message=FALSE, warning=FALSE}
+library(readxl)
+datos <- read_excel("C:/Users/HP/Desktop/DOCS MASTER/CLASES/CLASE 3/EVALMASTER2627.xlsx")
+knitr::kable(
+  head(datos),
+  row.names = FALSE,
+  align = c("l", "c", "c"),
+  caption = "Primeras seis observaciones"
+)
+```
+```{r}
+#Seleccionar la glucosa basal de cada grupo
+jovenes <- datos [["Nivel glucosa basal"]][datos[["Grupo de control"]]==1]
+adultos <- datos [["Nivel glucosa basal"]][datos[["Grupo de control"]]==2]
+
+#Calcular las medidas de centralización
+tabla <- data.frame(
+  Medida=c("Media", "Mediana", "Moda"),
+
+  Jovenes = c(
+    round(mean(jovenes), 2),
+    round(median(jovenes), 2),
+    paste(DescTools::Mode(jovenes), collapse = ", ")
+  ),
+
+  Adultos = c(
+    round(mean(adultos), 2),
+    round(median(adultos), 2),
+    paste(DescTools::Mode(adultos), collapse = ", ")
+  )
+)
+knitr::kable(
+  tabla,
+  row.names = FALSE,
+  align = c("l", "c", "c"),
+  caption = "Medidas de centralización de la glucosa basal (mg/dL)"
+)
+```
+Los jóvenes presentan una media de glucosa basal de 84,69 mg/dL, superior a su mediana de 82 mg/dL. Su distribución tiene cuatro modas: 75, 79, 82 y 90 mg/dL. En los adultos, la media es de 89,40 mg/dL y la mediana de 90 mg/dL, mientras que la única moda es 88 mg/dL. La media y la mediana son mayores en los adultos. En cuanto a la moda, los jóvenes presentan cuatro valores modales y los adultos uno. 
+
+```{r}
+
+#Calcular las medidas de dispersión:
+
+tabla <- data.frame(
+  Medida= c("Varianza muestral", "Desviación típica","Rango", "Rango intercuartílico","Coeficiente de variación (%)"),
+  Jovenes= c(var(jovenes),sd(jovenes), max(jovenes)-min(jovenes),IQR(jovenes, type=1), 100*sd(jovenes)/mean(jovenes)),
+  Adultos=c(var(adultos),sd(adultos), max(adultos)-min(adultos),IQR(adultos,type=1), 100*sd(adultos)/mean(adultos))
+)
+flextable::flextable(tabla) |>
+  flextable::set_header_labels(Jovenes = "Jóvenes") |>
+  flextable::colformat_double(j = 2:3, digits = 2) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::align(j = 1, align = "left", part = "all") |>
+  flextable::align(j = 2:3, align = "center", part = "all") |>
+  flextable::width(j = 1, width = 3.2) |>
+  flextable::width(j = 2:3, width = 1.1)
+```
+La glucosa basal presenta mayor dispersión en el grupo de los jóvenes, ya que todas las medidas de dispersión son superiores al grupo de los adultos. La desviación típica es de 8,84 mg/dL en jóvenes y de 7,35 mg/dL en adultos. Los coeficientes de variación son del 10,44 % y del 8,22 %, respectivamente, lo que indica mayor homogeneidad relativa en los adultos. Según el criterio utilizado en clase, ambas medias son representativas, ya que sus coeficientes de variación son inferiores al 30 %.
+
+
+## b) Asimetría y Curtosis:
+
+```{r}
+# Asimetría
+# Pearson con la mediana
+
+3 * (mean(adultos) - median(adultos)) / sd(adultos)
+```
+El coeficiente de asimetría de Pearson calculado con la mediana, es aproximadamente −0,245. Al ser negativo y cercano a cero, indica una pequeña asimetría hacia la izquierda en el nivel de glucosa basal de los adultos.
+
+```{r}
+curtosis_adultos <- psych::kurtosi(adultos, type = 2)
+curtosis_adultos
+```
+El exceso de curtosis es −0,613. Al ser negativo, la distribución se clasifica como platicúrtica según este coeficiente. El valor negativo justifica la clasificación como platicúrtica.
+
+
+## c) Cuartiles y diagrama de cajas 
+
+```{r}
+# Seleccionar las dos variables del grupo 1
+basal <- jovenes
+min60 <- datos[["Nivel glucosa 60 min"]][datos[["Grupo de control"]] == 1]
+
+# Cuartiles según el criterio de frecuencia acumulada del Tema 2
+q_basal <- quantile(basal, c(0.25, 0.50, 0.75), type = 1)
+q_min60 <- quantile(min60, c(0.25, 0.50, 0.75), type = 1)
+
+tabla_cuartiles <- data.frame(
+  Cuartil = c("Q1 (25 %)", "Q2 (50 %)", "Q3 (75 %)"),
+  Basal = as.numeric(q_basal),
+  "60 minutos" = as.numeric(q_min60),
+  check.names = FALSE
+)
+
+flextable::flextable(tabla_cuartiles) |>
+  flextable::set_header_labels(
+    Cuartil = "Cuartil",
+    Basal = "Glucosa basal",
+    "60 minutos" = "Glucosa a los 60 min"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::align(j = 1, align = "left", part = "all") |>
+  flextable::align(j = 2:3, align = "center", part = "all") |>
+  flextable::width(j = 1, width = 1.4) |>
+  flextable::width(j = 2:3, width = 1.8) |>
+  flextable::set_caption(
+    "Cuartiles de glucosa en jóvenes (grupo 1), en mg/dL"
+  )
+
+```
+
+- Basal: aproximadamente el 25 % de los jóvenes presenta valores de hasta 78; el 50 %, hasta 82; y el 75 %, hasta 91.
+- A los 60 minutos: aproximadamente el 25 % presenta valores de hasta 146; el 50 %, hasta 150; y el 75 %, hasta 155.
+
+```{r}
+# Límites para detectar valores atípicos
+limites <- function(q) {
+  ric <- q[3] - q[1]
+  c(Inferior = unname(q[1] - 1.5 * ric),
+    Superior = unname(q[3] + 1.5 * ric))
+}
+
+lim_basal <- limites(q_basal)
+lim_min60 <- limites(q_min60)
+
+# Preparar cada caja y sus bigotes
+resumen_caja <- function(x, q, limites) {
+  dentro <- x[x >= limites[1] & x <= limites[2]]
+  c(min(dentro), q[1], q[2], q[3], max(dentro))
+}
+
+atip_basal <- basal[basal < lim_basal[1] | basal > lim_basal[2]]
+atip_min60 <- min60[min60 < lim_min60[1] | min60 > lim_min60[2]]
+
+
+bxp(
+  list(
+    stats = cbind(
+      resumen_caja(basal, q_basal, lim_basal),
+      resumen_caja(min60, q_min60, lim_min60)
+    ),
+    n = c(length(basal), length(min60)),
+    out = c(atip_basal, atip_min60),
+    group = c(rep(1, length(atip_basal)),
+              rep(2, length(atip_min60))),
+    names = c("Basal", "60 minutos")
+  ),
+  main = "Nivel de glucosa — Grupo 1",
+  ylab = "Nivel de glucosa (mg/dL)",
+  col = c("lightblue", "lightgreen")
+)
+```
+```{r}
+sort(atip_min60)
+```
+
+En el grupo de control 1, el diagrama de cajas muestra niveles de glucosa superiores a los 60 minutos respecto al nivel basal, con medianas de 150 y 82, respectivamente. La dispersión del 50 % central de los datos es menor a los 60 minutos, con un rango intercuartílico de 9 frente a 13 en la medición basal. No se observan valores atípicos en la glucosa basal, mientras que a los 60 minutos se identifican dos valores atípicos leves: 131 y 172.
+
+
+
+## d) Estudiar la normalidad de los datos para cada uno de los grupos de control para el nivel de glucosa pasados 60 minutos: 
+
+```{r}
+# Glucosa a los 60 minutos de cada grupo
+jovenes_60 <- min60
+adultos_60 <- datos[["Nivel glucosa 60 min"]][datos[["Grupo de control"]]==2]
+
+#Pruebas de normalidad
+prueba_jovenes <- shapiro.test(jovenes_60)
+prueba_adultos <- shapiro.test(adultos_60)
+
+#Tabla de resultados
+tabla_normalidad <- data.frame (
+  Grupo = c ("Jovenes","Adultos"),
+   n = c(length(jovenes_60), length(adultos_60)),
+  W = c(unname(prueba_jovenes$statistic),
+        unname(prueba_adultos$statistic)),
+  "p-valor" = c(prueba_jovenes$p.value,
+                prueba_adultos$p.value),
+  check.names = FALSE
+)
+
+flextable::flextable(tabla_normalidad) |>
+  flextable::set_header_labels(
+    Grupo = "Grupo",
+    n = "Tamaño muestral",
+    W = "Estadístico W",
+    "p-valor" = "p-valor"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_int(j = "n") |>
+  flextable::colformat_double(
+    j = c("W", "p-valor"),
+    digits = 4
+  ) |>
+  flextable::align(
+    j = 1, align = "left", part = "all"
+  ) |>
+  flextable::align(
+    j = 2:4, align = "center", part = "all"
+  ) |>
+  flextable::width(j = 1, width = 1.2) |>
+  flextable::width(j = 2:4, width = 1.3) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Prueba de normalidad de Shapiro-Wilk para la glucosa a los 60 minutos"
+  )
+```
+La prueba de Shapiro-Wilk obtiene un p-valor de 0,2734 para los jóvenes y de 0,7592 para los adultos. Por tanto, con un nivel de significación del 5 %, no se rechaza la hipótesis de normalidad del nivel de glucosa a los 60 minutos en ninguno de los dos grupos.
+
+# Ejercicio 2
+## a) Relación lineal: gráfico y correlación
+
+
+```{r}
+grupo1 <- data.frame(basal=basal,min60=min60)
+
+#Diagrama de dispersión
+plot(
+  grupo1$basal, grupo1$min60,
+  main = "Relación entre glucosa basal y a los 60 minutos",
+  xlab = "Glucosa basal (mg/dL)",
+  ylab = "Glucosa a los 60 minutos (mg/dL)",
+  pch = 19,
+  col = "steelblue"
+)
+
+# Coeficiente de correlación de Pearson
+r <- cor(grupo1$basal, grupo1$min60)
+r
+
+
+
+```
+
+Se observa una relación lineal positiva fuerte entre la glucosa basal y la glucosa a los 60 minutos en el grupo 1 (Los jóvenes). Los jóvenes con mayor glucosa basal tienden a presentar mayor glucosa a los 60 minutos. Esta relación se refleja en un coeficiente de correlación de Pearson de 0,7964.
+
+
+
+## b) Modelo lineal y estimación para una glucosa basal de 83
+```{r}
+#Ajustar el modelo: Y en función de X
+modelo <- lm(min60 ~ basal, data = grupo1)
+
+#Mostrara intercepto y pendiente
+coef(modelo)
+
+#Estimar a glucosa a los 60 minutos cuando la basal es 83
+predict(modelo, newdata=data.frame(basal=83))
+
+
+```
+El intercepto es 91.38 y el 0.6968867 es la pendiente. Por cada 1 mg/dL adicional de glucosa basal, el modelo predice un incremento medio de 0.6969 mg/dL en la glucosa a los 60 minutos. 
+Para un paciente joven con 83 mg/dL de glucosa basal el modelo estima que su glucosa a los 60 minutos sería de 149.23 mg/dL.
+
+
+
+## c) ¿Qué tanto por ciento del nivel de glucosa en sangre pasados 60 minutos queda no queda explicado por el anterior modelo?
+
+```{r}
+R2 <- summary(modelo)$r.squared
+
+tabla_ajuste <- data.frame(
+  "R cuadrado" = R2,
+  "Variabilidad explicada (%)" = R2 * 100,
+  "Variabilidad no explicada (%)" = (1 - R2) * 100,
+  check.names = FALSE
+)
+
+flextable::flextable(tabla_ajuste) |>
+  flextable::set_header_labels(
+    "R cuadrado" = "R²",
+    "Variabilidad explicada (%)" = "Variabilidad\nexplicada (%)",
+    "Variabilidad no explicada (%)" = "Variabilidad\nno explicada (%)"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_double(j = 1, digits = 4) |>
+  flextable::colformat_double(j = 2:3, digits = 2) |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(j = 1, width = 1) |>
+  flextable::width(j = 2:3, width = 2) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Ajuste del modelo lineal de glucosa a los 60 minutos"
+  )
+```
+El modelo explica el 63,43 % de la variabilidad de la glucosa a los 60 minutos. Por tanto, el 36,57 % no queda explicado por el modelo.
+
+
+
+## d) Si aumentamos el nivel basal de un paciente en 5 mg/Dl ¿Qué variación experimentaría su nivel de glucosa al cabo de 60 minutos?
+
+```{r}
+# Multiplicar la pendiente por el incremento de glucosa basal
+variacion <- unname(coef(modelo)["basal"]) * 5
+variacion
+
+```
+
+Según el modelo, un incremento de 5 mg/dL en la glucosa basal se asocia con un aumento promedio estimado de 3,48 mg/dL en la glucosa a los 60 minutos.
+
+
+# Ejercicio 3
+
+
+## a) ¿La media de glucosa basal de los jóvenes puede ser 88 mg/dL?
+
+```{r}
+#Contraste e intervalos de confianza
+prueba95 <- t.test(jovenes, mu=88, conf.level=0.95)
+prueba99 <- t.test(jovenes, mu=88, conf.level=0.99)
+
+tabla_a <- data.frame(
+  Confianza=c("95%","99%"),
+  Inferior = c(prueba95$conf.int[1], prueba99$conf.int[1]),
+  Superior = c(prueba95$conf.int[2], prueba99$conf.int[2])
+)
+
+flextable::flextable(tabla_a) |>
+  flextable::set_header_labels(
+    Confianza = "Nivel de confianza",
+    Inferior = "Límite inferior (mg/dL)",
+    Superior = "Límite superior (mg/dL)"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_double(j = 2:3, digits = 2) |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(j = 1, width = 1.5) |>
+  flextable::width(j = 2:3, width = 1.8) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Intervalos de confianza para la media de glucosa basal de los jóvenes"
+  )
+
+
+```
+
+Con el intervalo del 95 %, el valor 88 queda fuera: incluso el límite superior, 87,72, es menor que 88. Por tanto, rechazamos que la media sea 88 mg/dL al nivel de significación del 5 %. Los resultados apuntan a una media inferior.
+
+Con el intervalo del 99 %, el valor 88 queda dentro. Por tanto, no rechazamos que la media sea 88 mg/dL al nivel de significación del 1 %
+
+
+## b) Diferencia de medias entre adultos y jóvenes
+```{r}
+diferencia <- mean(adultos)-mean(jovenes)
+diferencia
+
+error_estandar <- sqrt(
+  var(adultos)/length(adultos)+
+  var(jovenes)/length(jovenes)
+)
+
+inferior <- diferencia -qnorm(0.975)*error_estandar
+superior <- diferencia +qnorm(0.975)*error_estandar
+
+z <- diferencia/ error_estandar
+p_valor <- 2* pnorm(-abs(z))
+
+tabla_b <- data.frame(
+  Diferencia = diferencia,
+  Inferior = inferior, 
+  Superior = superior, 
+  p_valor = p_valor
+)
+
+flextable::flextable(tabla_b) |>
+  flextable::set_header_labels(
+    Diferencia = "Diferencia de medias\n(mg/dL)",
+    Inferior = "Límite inferior\nIC 95 % (mg/dL)",
+    Superior = "Límite superior\nIC 95 % (mg/dL)",
+    p_valor = "p-valor"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_double(j = 1:3, digits = 2) |>
+  flextable::colformat_double(j = 4, digits = 4) |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(j = 1:3, width = 1.5) |>
+  flextable::width(j = 4, width = 0.8) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Diferencia de glucosa basal media: adultos menos jóvenes"
+  )
+```
+
+Como el intervalo no incluye 0, rechazamos la igualdad de medias al 5 %. Los resultados indican que la media de glucosa basal de los adultos es mayor que la de los jóvenes, porque la diferencia adultos menos jóvenes es positiva; estimamos que la diferencia poblacional está entre 0,78 y 8,65 mg/dL, con un 95 % de confianza. Además el p-valor = 0,0189: como es menor que 0,05, rechazamos la hipótesis de igualdad de medias al 5 %.
+
+
+## c) Proporción de pacientes con glucosa basal superior a 95 mg/dL: intervalo de confianza al 98 % y contraste de \(H_0: p = 0{,}15\) al nivel de significación del 5 %.
+```{r}
+#Glucosa basal de todos los pacientes
+glucosa_basal <- datos[["Nivel glucosa basal"]]
+
+#Tamaño muestral y número de casos superiores a 95 mg/dL
+n <- length (glucosa_basal)
+casos <- sum (glucosa_basal>95)
+proporcion <- casos/n
+
+proporcion
+
+#Intervalo de confianza al 98%
+error_ic <- sqrt(proporcion*(1-proporcion)/n)
+
+ic98 <- proporcion + c(-1,1) * qnorm(0.99) * error_ic
+
+tabla_c<- data.frame(
+  Casos = casos,
+  Total=n,
+  "Proporcion (%)" = proporcion * 100,
+  "Inferior 98% (%)" = ic98[1] * 100,
+  "Superior 98% (%)" = ic98[2] * 100,
+  check.names = FALSE
+)
+
+flextable::flextable(tabla_c) |>
+  flextable::set_header_labels(
+    Casos = "Casos\n> 95 mg/dL",
+    Total = "Total",
+    Proporcion = "Proporción(%)",
+    Inferior = "Límite inferior 98 % (%)",
+    Superior = "Límite superior 98 % (%)"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_int(j = 1:2) |>
+  flextable::colformat_double(j = 3:5, digits = 2) |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(j = 1:2, width = 0.8) |>
+  flextable::width(j = 3:5, width = 1.2) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Proporción con glucosa basal superior a 95 mg/dL e IC al 98 %"
+  )
+
+```
+```{r}
+# Contraste bilateral: H0: p = 0.15; H1: p distinto de 0.15
+p0 <- 0.15
+alfa <- 0.05
+
+error_contraste <- sqrt(p0 * (1 - p0) / n)
+z <- (proporcion - p0) / error_contraste
+p_valor_c <- 2 * pnorm(-abs(z))
+
+# Tabla del contraste
+tabla_contraste_c <- data.frame(
+  Proporcion_H0 = p0,
+  Z = z,
+  p_valor = p_valor_c,
+  Decision = ifelse(
+    p_valor_c < alfa,
+    "Se rechaza H0",
+    "No se rechaza H0"
+  )
+)
+
+flextable::flextable(tabla_contraste_c) |>
+  flextable::set_header_labels(
+    Proporcion_H0 = "Proporción\nbajo H0",
+    Z = "Estadístico Z",
+    p_valor = "p-valor",
+    Decision = "Decisión al 5 %"
+  ) |>
+  flextable::theme_booktabs() |>
+  flextable::bold(part = "header") |>
+  flextable::bg(part = "header", bg = "#E8EFF5") |>
+  flextable::colformat_double(j = 1, digits = 2) |>
+  flextable::colformat_double(j = 2:3, digits = 4) |>
+  flextable::align(align = "center", part = "all") |>
+  flextable::width(j = 1:3, width = 1.1) |>
+  flextable::width(j = 4, width = 1.8) |>
+  flextable::padding(padding = 6, part = "all") |>
+  flextable::set_caption(
+    "Contraste de la proporción poblacional igual a 0,15"
+  )
+```
+En la muestra, 11 de los 65 pacientes presentan un nivel basal de glucosa superior a 95 mg/dL, lo que representa el 16,92 %. El intervalo de confianza al 98 % para la proporción poblacional es [6,10 %; 27,74 %].
+
+Para contrastar la hipótesis nula de que la proporción poblacional es del 15 %, frente a que sea distinta, se obtiene un estadístico Z de 0,4342 y un p-valor de 0,6641. Como el p-valor es superior a 0,05, no se rechaza la hipótesis nula al nivel de significación del 5 %. Por tanto, no existe evidencia estadística suficiente para concluir que la proporción poblacional con glucosa basal superior a 95 mg/dL sea diferente del 15 %.
+
+## d) Cambio de los adultos después de la toma
+```{r}
+# Cambio de cada adulto. Comparamos la glucosa de cada adulto antes de la toma y a los 60 minutos 
+diferencias <- adultos_60 - adultos
+
+# Contraste t sobre las diferencias
+prueba_pareada <- t.test(diferencias, mu = 0, conf.level = 0.95)
+
+prueba_pareada
+```
+el p-valor es menor que 2.2e-16, un número extremadamente pequeño, muy inferior a 0,05.Por tanto, rechazamos la hipótesis de ausencia de cambio medio al 5 %.Hay un aumento medio significativo de 82,43 mg/dL, con un IC del 95 % entre 77,53 y 87,34 mg/dL.
+
